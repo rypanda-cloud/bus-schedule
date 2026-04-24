@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大学シャトルバス案内</title>
+    <style>
+        :root { --main-blue: #00479d; --accent-red: #e63946; --bg-gray: #f4f7f9; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg-gray); margin: 0; padding: 15px; color: #333; }
+        .container { max-width: 450px; margin: auto; }
+        
+        .tabs { display: flex; background: #ddd; border-radius: 10px; padding: 4px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; background: transparent; }
+        .tab-btn.active { background: white; color: var(--main-blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; }
+        .direction-label { font-size: 1.1rem; font-weight: bold; color: var(--main-blue); margin-bottom: 10px; }
+        
+        .next-label { font-size: 0.9rem; color: #666; }
+        .timer { font-size: 3.8rem; font-weight: bold; color: var(--accent-red); margin: 5px 0 20px 0; line-height: 1; }
+        .timer span { font-size: 1.4rem; margin-left: 2px; }
+        .finished { font-size: 2.2rem; color: #999; }
+
+        .later-list { border-top: 2px dashed #eee; padding-top: 15px; text-align: left; }
+        .later-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 1rem; }
+        .later-label { color: #777; font-size: 0.85rem; width: 80px; }
+        .later-time { font-weight: bold; flex-grow: 1; margin-left: 10px; }
+        .tomorrow-tag { background: #666; color: white; font-size: 0.7rem; padding: 2px 5px; border-radius: 4px; margin-right: 5px; vertical-align: middle; }
+
+        .fare-badge { display: inline-block; background: #eef2f7; padding: 5px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; color: var(--main-blue); margin-top: 15px; }
+        .ads-box { margin-top: 20px; background: #fff; border: 1px dashed #bbb; padding: 30px 10px; border-radius: 10px; text-align: center; color: #999; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchDirection('toUniv', event)">大学行</button>
+        <button class="tab-btn" onclick="switchDirection('toStation', event)">駅行（帰り）</button>
+    </div>
+
+    <div class="card">
+        <div id="direction-text" class="direction-label">大学行シャトルバス</div>
+        
+        <div id="countdown-area">
+            <div class="next-label">先発まであと</div>
+            <div id="countdown" class="timer">--<span>分</span>--<span>秒</span></div>
+        </div>
+        
+        <div class="later-list">
+            <div class="later-item">
+                <span class="later-label" id="label2">次発</span>
+                <span class="later-time" id="time2">--:--</span>
+            </div>
+            <div class="later-item">
+                <span class="later-label" id="label3">次々発</span>
+                <span class="later-time" id="time3">--:--</span>
+            </div>
+        </div>
+
+        <div class="fare-badge">運賃：200円</div>
+    </div>
+
+    <div class="ads-box">【広告スペース】</div>
+</div>
+
+<script>
+const schedules = {
+    toUniv: ["07:30","07:40","07:45","07:52","07:57","08:01","08:05","08:15","08:16","08:18","08:18","08:20","08:20","08:23","08:23","08:25","08:27","08:30","08:33","08:37","08:40","08:45","08:50","08:55","09:02","09:12","09:20","09:25","09:30","09:33","09:40","09:43","09:47","09:50","09:53","09:58","10:01","10:04","10:07","10:10","10:12","10:15","10:18","10:21","10:24","10:27","10:30","10:37","10:47","10:52","11:03","11:16","11:22","11:32","11:37","11:52","12:02","12:12","12:16","12:22","12:28","12:32","12:37","12:47","12:52","13:22","13:37","13:52","14:30","15:55"],
+    toStation: ["10:50","11:50","12:25","12:30","12:43","12:50","13:10","13:30","13:50","14:10","14:30","14:40","14:50","14:53","14:58","15:03","15:10","15:20","15:30","15:40","15:50","16:00","16:10","16:20","16:30","16:37","16:40","16:43","16:47","16:50","16:53","16:57","17:03","17:15","17:20","17:40","17:50","18:05","18:20","18:23","18:28","18:33","18:38","18:48","18:58","19:03","19:18","19:33","19:48","20:08","20:45"]
+};
+
+let currentMode = 'toUniv';
+
+function switchDirection(mode, e) {
+    currentMode = mode;
+    const btns = document.querySelectorAll('.tab-btn');
+    btns.forEach(btn => btn.classList.remove('active'));
+    e.target.classList.add('active');
+    document.getElementById('direction-text').innerText = (mode === 'toUniv') ? "大学行シャトルバス" : "駅行（帰り）シャトルバス";
+    updateBusInfo();
+}
+
+function updateBusInfo() {
+    const now = new Date();
+    const nowStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    const schedule = schedules[currentMode];
+    
+    // 現在時刻より後のバスを抽出
+    let upcoming = schedule.filter(time => time > nowStr);
+    let isTomorrow = false;
+
+    // もし今日のバスが終わっていたら、翌日の始発を表示候補にする
+    if (upcoming.length === 0) {
+        upcoming = [schedule[0], schedule[1]]; // 明日の始発と次発
+        isTomorrow = true;
+    }
+
+    const countdownEl = document.getElementById('countdown');
+    const label2 = document.getElementById('label2');
+    const label3 = document.getElementById('label3');
+
+    if (isTomorrow) {
+        // 終バス終了後の表示
+        countdownEl.innerHTML = `<div class="finished">本日の運行終了</div>`;
+        label2.innerHTML = `<span class="tomorrow-tag">明日</span>始発`;
+        label3.innerHTML = `<span class="tomorrow-tag">明日</span>次発`;
+        document.getElementById('time2').innerText = upcoming[0];
+        document.getElementById('time3').innerText = upcoming[1];
+    } else {
+        // 通常のカウントダウン表示
+        const nextTime = upcoming[0];
+        const [h, m] = nextTime.split(':');
+        const target = new Date();
+        target.setHours(h, m, 0);
+        const diff = target - now;
+        const min = Math.floor(diff / 1000 / 60);
+        const sec = Math.floor(diff / 1000) % 60;
+        
+        countdownEl.innerHTML = `${min}<span>分</span>${sec}<span>秒</span>`;
+        
+        label2.innerText = "次発";
+        label3.innerText = "次々発";
+        document.getElementById('time2').innerText = upcoming[1] || "終バス";
+        document.getElementById('time3').innerText = upcoming[2] || "--:--";
+    }
+}
+
+setInterval(updateBusInfo, 1000);
+updateBusInfo();
+</script>
+</body>
+</html>
