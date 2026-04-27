@@ -5,42 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>大学シャトルバス案内</title>
     <style>
-        :root { --main-blue: #00479d; --accent-red: #e63946; --bg-gray: #f4f7f9; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg-gray); margin: 0; padding: 15px; color: #333; }
+        /* --- 変数定義（ライトモード基準） --- */
+        :root {
+            --bg-color: #f4f7f9;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-sub: #666666;
+            --main-blue: #00479d;
+            --accent-red: #e63946;
+            --tab-bg: #dddddd;
+            --border-color: #eeeeee;
+        }
+
+        /* --- OSのダークモード設定、または18時以降の強制夜間モード --- */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-color: #121212;
+                --card-bg: #1e1e1e;
+                --text-main: #e0e0e0;
+                --text-sub: #aaaaaa;
+                --main-blue: #4a90e2;
+                --accent-red: #ff5252;
+                --tab-bg: #333333;
+                --border-color: #333333;
+            }
+        }
+
+        /* JavaScriptで付与する「夜間クラス」用（18時以降） */
+        body.night-mode {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f1f5f9;
+            --text-sub: #94a3b8;
+            --main-blue: #38bdf8;
+            --accent-red: #fb7185;
+            --tab-bg: #334155;
+            --border-color: #334155;
+        }
+
+        body { font-family: -apple-system, sans-serif; background: var(--bg-color); margin: 0; padding: 15px; color: var(--text-main); transition: all 0.3s ease; }
         .container { max-width: 450px; margin: auto; }
         
-        .tabs { display: flex; background: #ddd; border-radius: 10px; padding: 4px; margin-bottom: 15px; }
-        .tab-btn { flex: 1; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; background: transparent; }
-        .tab-btn.active { background: white; color: var(--main-blue); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .tabs { display: flex; background: var(--tab-bg); border-radius: 12px; padding: 4px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; border: none; padding: 12px; border-radius: 9px; font-weight: bold; cursor: pointer; background: transparent; color: var(--text-sub); transition: 0.2s; }
+        .tab-btn.active { background: var(--card-bg); color: var(--main-blue); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
-        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; }
+        .card { background: var(--card-bg); border-radius: 24px; padding: 30px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; border: 1px solid var(--border-color); }
         .direction-label { font-size: 1.1rem; font-weight: bold; color: var(--main-blue); margin-bottom: 10px; }
         
-        .next-label { font-size: 0.9rem; color: #666; }
-        .timer { font-size: 3.8rem; font-weight: bold; color: var(--accent-red); margin: 5px 0 20px 0; line-height: 1; }
-        .timer span { font-size: 1.4rem; margin-left: 2px; }
-        .finished { font-size: 2.2rem; color: #999; }
+        .next-label { font-size: 0.9rem; color: var(--text-sub); }
+        .timer { font-size: 4rem; font-weight: bold; color: var(--accent-red); margin: 5px 0 20px 0; line-height: 1; letter-spacing: -1px; }
+        .timer span { font-size: 1.5rem; margin-left: 2px; }
+        .finished { font-size: 1.8rem; color: var(--text-sub); padding: 20px 0; }
 
-        .later-list { border-top: 2px dashed #eee; padding-top: 15px; text-align: left; }
-        .later-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 1rem; }
-        .later-label { color: #777; font-size: 0.85rem; width: 80px; }
-        .later-time { font-weight: bold; flex-grow: 1; margin-left: 10px; }
-        .tomorrow-tag { background: #666; color: white; font-size: 0.7rem; padding: 2px 5px; border-radius: 4px; margin-right: 5px; vertical-align: middle; }
+        .later-list { border-top: 2px dashed var(--border-color); padding-top: 20px; text-align: left; }
+        .later-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .later-label { color: var(--text-sub); font-size: 0.85rem; width: 80px; }
+        .later-time { font-weight: bold; font-size: 1.1rem; flex-grow: 1; margin-left: 10px; }
+        .tomorrow-tag { background: var(--main-blue); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-right: 6px; }
 
-        .fare-badge { display: inline-block; background: #eef2f7; padding: 5px 15px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; color: var(--main-blue); margin-top: 15px; }
-        .ads-box { margin-top: 20px; background: #fff; border: 1px dashed #bbb; padding: 30px 10px; border-radius: 10px; text-align: center; color: #999; font-size: 0.8rem; }
+        .fare-badge { display: inline-block; background: var(--tab-bg); padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; color: var(--main-blue); margin-top: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="tabs">
-        <button class="tab-btn active" onclick="switchDirection('toUniv', event)">大学行</button>
-        <button class="tab-btn" onclick="switchDirection('toStation', event)">駅行（帰り）</button>
+        <button id="btn-toUniv" class="tab-btn" onclick="switchDirection('toUniv', true)">大学行</button>
+        <button id="btn-toStation" class="tab-btn" onclick="switchDirection('toStation', true)">駅行（帰り）</button>
     </div>
 
     <div class="card">
-        <div id="direction-text" class="direction-label">大学行シャトルバス</div>
+        <div id="direction-text" class="direction-label">読み込み中...</div>
         
         <div id="countdown-area">
             <div class="next-label">先発まであと</div>
@@ -60,8 +96,6 @@
 
         <div class="fare-badge">運賃：200円</div>
     </div>
-
-    <div class="ads-box">【広告スペース】</div>
 </div>
 
 <script>
@@ -70,13 +104,30 @@ const schedules = {
     toStation: ["10:50","11:50","12:25","12:30","12:43","12:50","13:10","13:30","13:50","14:10","14:30","14:40","14:50","14:53","14:58","15:03","15:10","15:20","15:30","15:40","15:50","16:00","16:10","16:20","16:30","16:37","16:40","16:43","16:47","16:50","16:53","16:57","17:03","17:15","17:20","17:40","17:50","18:05","18:20","18:23","18:28","18:33","18:38","18:48","18:58","19:03","19:18","19:33","19:48","20:08","20:45"]
 };
 
-let currentMode = 'toUniv';
+let currentMode = '';
 
-function switchDirection(mode, e) {
+// 初期設定：午前/午後の自動判定と夜間モード判定
+function init() {
+    const now = new Date();
+    const hour = now.getHours();
+
+    // 1. 18時以降なら夜間モードクラスを付与
+    if (hour >= 18 || hour < 6) {
+        document.body.classList.add('night-mode');
+    }
+
+    // 2. 12時前なら大学行、12時以降なら駅行をデフォルトに
+    const defaultMode = (hour < 12) ? 'toUniv' : 'toStation';
+    switchDirection(defaultMode, false);
+}
+
+function switchDirection(mode, isManual) {
     currentMode = mode;
-    const btns = document.querySelectorAll('.tab-btn');
-    btns.forEach(btn => btn.classList.remove('active'));
-    e.target.classList.add('active');
+    
+    // タブのクラス更新
+    document.getElementById('btn-toUniv').classList.toggle('active', mode === 'toUniv');
+    document.getElementById('btn-toStation').classList.toggle('active', mode === 'toStation');
+    
     document.getElementById('direction-text').innerText = (mode === 'toUniv') ? "大学行シャトルバス" : "駅行（帰り）シャトルバス";
     updateBusInfo();
 }
@@ -86,14 +137,11 @@ function updateBusInfo() {
     const nowStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
     const schedule = schedules[currentMode];
     
-    // 現在時刻より後のバスを抽出
     let upcoming = schedule.filter(time => time > nowStr);
-    let isTomorrow = false;
+    let isTomorrow = (upcoming.length === 0);
 
-    // もし今日のバスが終わっていたら、翌日の始発を表示候補にする
-    if (upcoming.length === 0) {
-        upcoming = [schedule[0], schedule[1]]; // 明日の始発と次発
-        isTomorrow = true;
+    if (isTomorrow) {
+        upcoming = [schedule[0], schedule[1]];
     }
 
     const countdownEl = document.getElementById('countdown');
@@ -101,14 +149,12 @@ function updateBusInfo() {
     const label3 = document.getElementById('label3');
 
     if (isTomorrow) {
-        // 終バス終了後の表示
         countdownEl.innerHTML = `<div class="finished">本日の運行終了</div>`;
         label2.innerHTML = `<span class="tomorrow-tag">明日</span>始発`;
         label3.innerHTML = `<span class="tomorrow-tag">明日</span>次発`;
-        document.getElementById('time2').innerText = upcoming[0];
-        document.getElementById('time3').innerText = upcoming[1];
+        document.getElementById('time2').innerText = upcoming[0] || "--:--";
+        document.getElementById('time3').innerText = upcoming[1] || "--:--";
     } else {
-        // 通常のカウントダウン表示
         const nextTime = upcoming[0];
         const [h, m] = nextTime.split(':');
         const target = new Date();
@@ -118,7 +164,6 @@ function updateBusInfo() {
         const sec = Math.floor(diff / 1000) % 60;
         
         countdownEl.innerHTML = `${min}<span>分</span>${sec}<span>秒</span>`;
-        
         label2.innerText = "次発";
         label3.innerText = "次々発";
         document.getElementById('time2').innerText = upcoming[1] || "終バス";
@@ -126,8 +171,10 @@ function updateBusInfo() {
     }
 }
 
+// 起動
+init();
 setInterval(updateBusInfo, 1000);
-updateBusInfo();
 </script>
+
 </body>
 </html>
