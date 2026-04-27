@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>立命館大学バス案内 2025</title>
+    <title>立命館バス案内 2025 (運賃別)</title>
     <style>
         :root {
             --bg-color: #f4f7f9; --card-bg: #ffffff; --text-main: #333333;
             --text-sub: #666666; --main-blue: #00479d; --accent-red: #e63946;
-            --tab-bg: #dddddd; --border-color: #eeeeee;
+            --tab-bg: #dddddd; --border-color: #eeeeee; --price-tag: #4caf50;
         }
         @media (prefers-color-scheme: dark) {
             :root {
@@ -17,93 +17,75 @@
                 --tab-bg: #333333; --border-color: #333333;
             }
         }
-        body.night-mode {
-            --bg-color: #0f172a; --card-bg: #1e293b; --text-main: #f1f5f9;
-            --main-blue: #38bdf8; --accent-red: #fb7185;
-        }
-        body { font-family: -apple-system, sans-serif; background: var(--bg-color); margin: 0; padding: 15px; color: var(--text-main); transition: 0.3s; }
+        body.night-mode { --bg-color: #0f172a; --card-bg: #1e293b; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg-color); margin: 0; padding: 12px; color: var(--text-main); transition: 0.3s; }
         .container { max-width: 500px; margin: auto; }
         
-        /* 階層型メニュー */
-        .section-label { font-size: 0.85rem; font-weight: bold; margin: 15px 5px 5px; color: var(--text-sub); text-transform: uppercase; }
-        .tabs { display: flex; flex-wrap: wrap; background: var(--tab-bg); border-radius: 12px; padding: 4px; gap: 4px; margin-bottom: 10px; }
-        .tab-btn { flex: 1; min-width: 100px; border: none; padding: 10px 5px; border-radius: 8px; font-size: 0.85rem; font-weight: bold; cursor: pointer; background: transparent; color: var(--text-sub); transition: 0.2s; }
+        .section-label { font-size: 0.8rem; font-weight: bold; margin: 12px 5px 6px; color: var(--text-sub); }
+        .tabs { display: flex; background: var(--tab-bg); border-radius: 12px; padding: 4px; gap: 4px; }
+        .tab-btn { flex: 1; border: none; padding: 10px 5px; border-radius: 8px; font-size: 0.85rem; font-weight: bold; cursor: pointer; background: transparent; color: var(--text-sub); }
         .tab-btn.active { background: var(--card-bg); color: var(--main-blue); box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
 
-        .card { background: var(--card-bg); border-radius: 24px; padding: 25px 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; border: 1px solid var(--border-color); margin-top: 15px; }
-        .direction-info { margin-bottom: 15px; }
-        .stop-badge { display: inline-block; background: var(--main-blue); color: white; padding: 2px 10px; border-radius: 5px; font-size: 0.8rem; margin-bottom: 5px; }
-        .dest-label { font-size: 1.1rem; font-weight: bold; display: block; }
+        .card { background: var(--card-bg); border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; border: 1px solid var(--border-color); margin-top: 15px; }
+        .price-badge { display: inline-block; background: var(--price-tag); color: white; padding: 2px 12px; border-radius: 12px; font-size: 0.9rem; font-weight: bold; margin-bottom: 10px; }
+        .stop-info { font-size: 1.1rem; font-weight: bold; margin-bottom: 5px; color: var(--main-blue); }
         
-        .timer { font-size: 3.5rem; font-weight: bold; color: var(--accent-red); margin: 10px 0; line-height: 1; }
-        .timer span { font-size: 1.3rem; margin-left: 2px; }
+        .timer { font-size: 3.5rem; font-weight: bold; color: var(--accent-red); margin: 10px 0; letter-spacing: -2px; }
+        .timer span { font-size: 1.3rem; margin-left: 2px; letter-spacing: 0; }
 
         .later-list { border-top: 2px dashed var(--border-color); padding-top: 15px; text-align: left; margin-top: 15px; }
         .later-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-        .later-label { color: var(--text-sub); font-size: 0.8rem; width: 60px; }
-        .later-time { font-weight: bold; font-size: 1rem; flex-grow: 1; }
+        .later-time { font-weight: bold; font-size: 1.1rem; }
         .later-diff { color: var(--accent-red); font-size: 0.85rem; font-weight: bold; }
         
-        .footer-info { margin-top: 20px; font-size: 0.75rem; color: var(--text-sub); text-align: center; }
+        .footer { margin-top: 20px; font-size: 0.7rem; color: var(--text-sub); text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="section-label">1. 出発地を選択</div>
+    <div class="section-label">出発地</div>
     <div class="tabs">
         <button id="base-station" class="tab-btn" onclick="setBase('station')">南草津駅 発</button>
         <button id="base-univ" class="tab-btn" onclick="setBase('univ')">立命館大学 発</button>
     </div>
 
-    <div id="route-selection">
-        <div class="section-label">2. 乗り場・行き先を選択</div>
-        <div id="route-tabs" class="tabs"></div>
-    </div>
+    <div class="section-label">乗り場を選択 (運賃別)</div>
+    <div id="route-tabs" class="tabs"></div>
 
     <div class="card">
-        <div class="direction-info">
-            <span id="stop-name" class="stop-badge">--</span>
-            <span id="dest-name" class="dest-label">目的地</span>
-        </div>
+        <div id="price-display" class="price-badge">200円</div>
+        <div id="stop-display" class="stop-info">--</div>
+        <div id="dest-display" style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">--</div>
         
-        <div class="next-label" style="font-size:0.9rem; color:var(--text-sub);">先発まであと</div>
+        <div style="font-size:0.8rem; color:var(--text-sub);">先発まであと</div>
         <div id="countdown" class="timer">--<span>分</span>--<span>秒</span></div>
         
         <div class="later-list">
-            <div class="later-item">
-                <span class="later-label">次発</span>
-                <span class="later-time" id="time2">--:--</span>
-                <span id="diff2" class="later-diff"></span>
-            </div>
-            <div class="later-item">
-                <span class="later-label">次々発</span>
-                <span class="later-time" id="time3">--:--</span>
-                <span id="diff3" class="later-diff"></span>
-            </div>
+            <div class="later-item"><span>次発</span><span id="time2" class="later-time">--:--</span><span id="diff2" class="later-diff"></span></div>
+            <div class="later-item"><span>次々発</span><span id="time3" class="later-time">--:--</span><span id="diff3" class="later-diff"></span></div>
         </div>
     </div>
     
-    <div class="footer-info">2025年4月7日改正 平日・開講ダイヤ対応</div>
+    <div class="footer">2025.4.7 改正 平日・開講ダイヤ対応</div>
 </div>
 
 <script>
-// PDFデータに基づく時刻表 (平日・開講) 
 const busData = {
     station: {
         routes: [
-            { id: 's1', stop: '1番のりば', dest: '立命館大学 行 (直行・全経由)', 
-              times: ["07:01","07:05","07:15","07:16","07:18","07:20","07:23","07:25","07:27","07:30","07:33","07:37","07:40","07:43","07:45","07:47","07:50","07:52","07:55","07:57","08:01","08:02","08:05","08:12","08:15","08:16","08:18","08:20","08:23","08:25","08:27","08:30","08:33","08:37","08:40","08:43","08:45","08:47","08:50","08:53","08:55","08:58","09:01","09:02","09:04","09:07","09:10","09:12","09:15","09:18","09:21","09:24","09:25","09:27","09:30","09:33","09:37","09:40","09:43","09:47","09:50","09:53","09:58","10:01","10:04","10:07","10:10","10:12","10:15","10:18","10:21","10:24","10:27","10:30","10:37","10:47","10:52","11:03","11:16","11:22","11:32","11:37","11:52","12:02","12:12","12:16","12:22","12:28","12:32","12:37","12:47","12:52","13:22","13:37","13:52","14:30","15:55"] }
+            { id: 's1', stop: '1番のりば', price: '200', dest: '直行シャトルバス', 
+              times: ["07:01","07:05","07:15","07:16","07:18","07:20","07:23","07:27","07:30","07:33","07:37","07:40","07:43","07:47","07:50","07:52","07:58","08:01","08:05","08:15","08:16","08:18","08:20","08:23","08:25","08:27","08:30","08:33","08:37","08:40","08:45","08:50","08:55","09:02","09:12","09:20","09:25","09:30","09:33","09:40","09:43","09:47","09:50","09:53","09:58","10:01","10:04","10:07","10:10","10:12","10:15","10:18","10:21","10:24","10:27","10:30","10:37","10:47","10:52","11:03","11:16","11:22","11:32","11:37","11:52","12:02","12:12","12:16","12:22","12:28","12:32","12:37","12:47","12:52","13:22","13:37","13:52","14:30","15:55"] },
+            { id: 's2', stop: '3, 4, 5番のりば', price: '280', dest: 'かがやき通り・パナソニック経由', 
+              times: ["06:57","07:07","07:16","07:23","07:33","07:45","08:02","08:12","08:20","08:25","08:33","08:40","08:43","08:47","09:04","09:18","09:24","10:18","10:37","11:03","11:37","12:16","12:37","13:16","14:16","15:16","15:37","16:18","16:54","17:24","18:24","19:24","20:24","21:24"] }
         ]
     },
     univ: {
         routes: [
-            { id: 'u3', stop: '3番のりば', dest: '南草津駅 行 (シャトル直行)', 
-              times: ["10:50","11:50","12:25","12:30","12:43","12:50","13:10","13:30","13:50","14:10","14:30","14:40","14:50","14:53","14:58","15:03","15:10","15:15","15:20","15:30","15:40","15:50","16:00","16:03","16:10","16:20","16:30","16:37","16:40","16:43","16:47","16:50","16:53","16:57","17:03","17:15","17:20","17:40","17:50","18:05","18:20","18:23","18:28","18:33","18:38","18:48","18:58","19:03","19:18","19:33","19:48","20:08","20:45"] },
-            { id: 'u2', stop: '2番のりば', dest: '南草津駅 行 (各線経由)', 
-              times: ["07:00","07:15","07:35","08:05","08:35","09:05","09:35","10:05","10:40","11:05","11:35","12:05","12:35","13:05","13:35","14:05","14:35","15:05","15:35","16:05","16:40","17:10","17:35","17:50","18:05","18:20","18:35","18:50","19:05","19:20","19:35","19:50","20:05","20:20","20:50","21:50","22:40"] },
-            { id: 'u1', stop: '1番のりば', dest: '草津駅・瀬田駅 行', 
-              times: ["07:45","08:45","09:15","09:30","09:45","10:00","10:40","10:45","11:15","11:30","12:00","12:30","12:45","13:15","13:30","13:45","14:55","15:00","15:45","16:15","16:40","16:45","17:15","17:45","18:25","18:35","19:15","19:30","19:40","20:15","20:40","21:00"] }
+            { id: 'u1', stop: '3番のりば', price: '200', dest: '南草津駅 行 (シャトル直行)', 
+              times: ["10:50","11:50","12:43","13:30","14:10","14:30","14:40","14:50","14:53","14:58","15:03","15:10","15:20","15:30","15:40","15:50","16:00","16:10","16:20","16:30","16:37","16:40","16:43","16:47","16:50","16:53","16:57","17:03","17:15","17:20","17:40","17:50","18:05","18:23","18:28","18:33","18:38","18:48","18:58","19:03","19:18","19:33","19:48","20:08","20:45"] },
+            { id: 'u2', stop: '2番のりば', price: '280', dest: '南草津駅 行 (各線経由)', 
+              times: ["07:00","07:15","07:35","08:05","08:35","09:05","09:35","10:05","10:40","10:45","11:35","11:50","12:05","12:25","12:30","12:35","12:50","13:05","13:10","13:35","13:50","14:05","14:35","14:55","15:05","15:35","15:45","16:05","16:40","17:10","17:35","17:55","18:10","18:25","18:40","18:55","19:10","19:25","19:40","19:55","20:10","20:25","20:40","20:50","21:10","21:25","21:40","21:50","22:00","22:40"] }
         ]
     }
 };
@@ -114,7 +96,6 @@ let currentRouteId = '';
 function init() {
     const hour = new Date().getHours();
     if (hour >= 18 || hour < 6) document.body.classList.add('night-mode');
-    // 午前は駅発、午後は大学発をデフォルトに
     setBase(hour < 12 ? 'station' : 'univ');
 }
 
@@ -123,19 +104,16 @@ function setBase(base) {
     document.getElementById('base-station').classList.toggle('active', base === 'station');
     document.getElementById('base-univ').classList.toggle('active', base === 'univ');
     
-    // 乗り場タブの生成
     const routeTabs = document.getElementById('route-tabs');
     routeTabs.innerHTML = '';
-    busData[base].routes.forEach((route, index) => {
+    busData[base].routes.forEach(route => {
         const btn = document.createElement('button');
         btn.className = 'tab-btn';
-        btn.innerText = route.stop;
+        btn.innerHTML = `${route.stop}<br><small>${route.price}円</small>`;
         btn.onclick = () => setRoute(route.id);
         btn.id = `btn-${route.id}`;
         routeTabs.appendChild(btn);
     });
-    
-    // 最初のルートをデフォルト選択
     setRoute(busData[base].routes[0].id);
 }
 
@@ -144,14 +122,15 @@ function setRoute(routeId) {
     const routes = busData[currentBase].routes;
     const route = routes.find(r => r.id === routeId);
     
-    // タブの見た目更新
     routes.forEach(r => {
         const btn = document.getElementById(`btn-${r.id}`);
         if(btn) btn.classList.toggle('active', r.id === routeId);
     });
 
-    document.getElementById('stop-name').innerText = route.stop;
-    document.getElementById('dest-name').innerText = route.dest;
+    document.getElementById('price-display').innerText = `${route.price}円`;
+    document.getElementById('price-display').style.background = route.price === '200' ? '#4caf50' : '#00479d';
+    document.getElementById('stop-display').innerText = route.stop;
+    document.getElementById('dest-display').innerText = route.dest;
     updateDisplay();
 }
 
@@ -166,7 +145,7 @@ function updateDisplay() {
 
     const countdownEl = document.getElementById('countdown');
     if (isTomorrow) {
-        countdownEl.innerHTML = `<div style="font-size:1.5rem; color:var(--text-sub); padding:15px;">本日の運行終了</div>`;
+        countdownEl.innerHTML = `<div style="font-size:1.4rem; color:var(--text-sub); padding:10px;">運行終了 (明日始発を表示中)</div>`;
         document.getElementById('time2').innerText = upcoming[0];
         document.getElementById('diff2').innerText = "明日始発";
     } else {
