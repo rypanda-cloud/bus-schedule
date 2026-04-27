@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>立命館バス案内 2025 (運賃別)</title>
+    <title>立命館バス案内 2025</title>
     <style>
         :root {
             --bg-color: #f4f7f9; --card-bg: #ffffff; --text-main: #333333;
@@ -35,10 +35,12 @@
 
         .later-list { border-top: 2px dashed var(--border-color); padding-top: 15px; text-align: left; margin-top: 15px; }
         .later-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .later-label { font-size: 0.85rem; color: var(--text-sub); font-weight: bold; }
         .later-time { font-weight: bold; font-size: 1.1rem; }
         .later-diff { color: var(--accent-red); font-size: 0.85rem; font-weight: bold; }
         
         .footer { margin-top: 20px; font-size: 0.7rem; color: var(--text-sub); text-align: center; }
+        .tomorrow-tag { background: var(--main-blue); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; vertical-align: middle; margin-right: 4px; }
     </style>
 </head>
 <body>
@@ -58,12 +60,20 @@
         <div id="stop-display" class="stop-info">--</div>
         <div id="dest-display" style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">--</div>
         
-        <div style="font-size:0.8rem; color:var(--text-sub);">先発まであと</div>
+        <div id="timer-label" style="font-size:0.8rem; color:var(--text-sub);">先発まであと</div>
         <div id="countdown" class="timer">--<span>分</span>--<span>秒</span></div>
         
         <div class="later-list">
-            <div class="later-item"><span>次発</span><span id="time2" class="later-time">--:--</span><span id="diff2" class="later-diff"></span></div>
-            <div class="later-item"><span>次々発</span><span id="time3" class="later-time">--:--</span><span id="diff3" class="later-diff"></span></div>
+            <div class="later-item">
+                <span id="label2" class="later-label">次発</span>
+                <span id="time2" class="later-time">--:--</span>
+                <span id="diff2" class="later-diff"></span>
+            </div>
+            <div class="later-item">
+                <span id="label3" class="later-label">次々発</span>
+                <span id="time3" class="later-time">--:--</span>
+                <span id="diff3" class="later-diff"></span>
+            </div>
         </div>
     </div>
     
@@ -141,14 +151,36 @@ function updateDisplay() {
     
     let upcoming = route.times.filter(t => t > nowStr);
     const isTomorrow = upcoming.length === 0;
-    if (isTomorrow) upcoming = [route.times[0], route.times[1], route.times[2]];
-
+    
+    // ラベル要素を取得
+    const label2 = document.getElementById('label2');
+    const label3 = document.getElementById('label3');
+    const timerLabel = document.getElementById('timer-label');
     const countdownEl = document.getElementById('countdown');
+
     if (isTomorrow) {
-        countdownEl.innerHTML = `<div style="font-size:1.4rem; color:var(--text-sub); padding:10px;">運行終了 (明日始発を表示中)</div>`;
+        // --- 運行終了時のロジック ---
+        upcoming = [route.times[0], route.times[1], route.times[2]];
+        
+        timerLabel.innerText = "本日の運行は終了しました";
+        countdownEl.innerHTML = `<div style="font-size:1.4rem; color:var(--text-sub); padding:10px;">また明日！</div>`;
+        
+        // 次発を「始発」に、次々発を「次発」に書き換え
+        label2.innerHTML = `<span class="tomorrow-tag">明日</span>始発`;
+        label3.innerHTML = `<span class="tomorrow-tag">明日</span>次発`;
+        
         document.getElementById('time2').innerText = upcoming[0];
-        document.getElementById('diff2').innerText = "明日始発";
+        document.getElementById('time3').innerText = upcoming[1] || "--:--";
+        document.getElementById('diff2').innerText = "";
+        document.getElementById('diff3').innerText = "";
+        
     } else {
+        // --- 通常運行時のロジック ---
+        timerLabel.innerText = "先発まであと";
+        
+        label2.innerText = "次発";
+        label3.innerText = "次々発";
+        
         const [h, m] = upcoming[0].split(':');
         const target = new Date(); target.setHours(h, m, 0);
         const diff = target - now;
