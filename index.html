@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大学シャトルバス案内</title>
+    <title>立命館大学 シャトルバス案内</title>
     <style>
-        /* --- 変数定義（ライトモード基準） --- */
         :root {
             --bg-color: #f4f7f9;
             --card-bg: #ffffff;
@@ -17,7 +16,6 @@
             --border-color: #eeeeee;
         }
 
-        /* --- OSのダークモード設定、または18時以降の強制夜間モード --- */
         @media (prefers-color-scheme: dark) {
             :root {
                 --bg-color: #121212;
@@ -31,7 +29,6 @@
             }
         }
 
-        /* JavaScriptで付与する「夜間クラス」用（18時以降） */
         body.night-mode {
             --bg-color: #0f172a;
             --card-bg: #1e293b;
@@ -54,14 +51,15 @@
         .direction-label { font-size: 1.1rem; font-weight: bold; color: var(--main-blue); margin-bottom: 10px; }
         
         .next-label { font-size: 0.9rem; color: var(--text-sub); }
-        .timer { font-size: 4rem; font-weight: bold; color: var(--accent-red); margin: 5px 0 20px 0; line-height: 1; letter-spacing: -1px; }
-        .timer span { font-size: 1.5rem; margin-left: 2px; }
-        .finished { font-size: 1.8rem; color: var(--text-sub); padding: 20px 0; }
+        .timer { font-size: 3.8rem; font-weight: bold; color: var(--accent-red); margin: 5px 0 20px 0; line-height: 1; letter-spacing: -1px; }
+        .timer span { font-size: 1.4rem; margin-left: 2px; }
+        .finished { font-size: 1.6rem; color: var(--text-sub); padding: 20px 0; font-weight: bold; }
 
         .later-list { border-top: 2px dashed var(--border-color); padding-top: 20px; text-align: left; }
         .later-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
         .later-label { color: var(--text-sub); font-size: 0.85rem; width: 80px; }
         .later-time { font-weight: bold; font-size: 1.1rem; flex-grow: 1; margin-left: 10px; }
+        .later-diff { color: var(--accent-red); font-size: 0.85rem; font-weight: bold; }
         .tomorrow-tag { background: var(--main-blue); color: white; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; margin-right: 6px; }
 
         .fare-badge { display: inline-block; background: var(--tab-bg); padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; color: var(--main-blue); margin-top: 20px; }
@@ -71,8 +69,8 @@
 
 <div class="container">
     <div class="tabs">
-        <button id="btn-toUniv" class="tab-btn" onclick="switchDirection('toUniv', true)">大学行</button>
-        <button id="btn-toStation" class="tab-btn" onclick="switchDirection('toStation', true)">駅行（帰り）</button>
+        <button id="btn-toUniv" class="tab-btn" onclick="switchDirection('toUniv')">南草津駅発</button>
+        <button id="btn-toStation" class="tab-btn" onclick="switchDirection('toStation')">大学発</button>
     </div>
 
     <div class="card">
@@ -87,10 +85,12 @@
             <div class="later-item">
                 <span class="later-label" id="label2">次発</span>
                 <span class="later-time" id="time2">--:--</span>
+                <span class="later-diff" id="diff2"></span>
             </div>
             <div class="later-item">
                 <span class="later-label" id="label3">次々発</span>
                 <span class="later-time" id="time3">--:--</span>
+                <span class="later-diff" id="diff3"></span>
             </div>
         </div>
 
@@ -99,37 +99,61 @@
 </div>
 
 <script>
+// PDFから抽出した2025年4月改正 平日時刻表
 const schedules = {
-    toUniv: ["07:30","07:40","07:45","07:52","07:57","08:01","08:05","08:15","08:16","08:18","08:18","08:20","08:20","08:23","08:23","08:25","08:27","08:30","08:33","08:37","08:40","08:45","08:50","08:55","09:02","09:12","09:20","09:25","09:30","09:33","09:40","09:43","09:47","09:50","09:53","09:58","10:01","10:04","10:07","10:10","10:12","10:15","10:18","10:21","10:24","10:27","10:30","10:37","10:47","10:52","11:03","11:16","11:22","11:32","11:37","11:52","12:02","12:12","12:16","12:22","12:28","12:32","12:37","12:47","12:52","13:22","13:37","13:52","14:30","15:55"],
-    toStation: ["10:50","11:50","12:25","12:30","12:43","12:50","13:10","13:30","13:50","14:10","14:30","14:40","14:50","14:53","14:58","15:03","15:10","15:20","15:30","15:40","15:50","16:00","16:10","16:20","16:30","16:37","16:40","16:43","16:47","16:50","16:53","16:57","17:03","17:15","17:20","17:40","17:50","18:05","18:20","18:23","18:28","18:33","18:38","18:48","18:58","19:03","19:18","19:33","19:48","20:08","20:45"]
+    // 南草津駅発 (シャトル・直行)
+    toUniv: [
+        "07:30","07:40","07:45","07:52","07:57",
+        "08:01","08:05","08:15","08:16","08:18","08:20","08:23","08:25","08:27","08:30","08:33","08:37","08:40","08:45","08:50","08:55",
+        "09:02","09:12","09:20","09:25","09:30","09:33","09:40","09:43","09:47","09:50","09:53","09:58",
+        "10:01","10:04","10:07","10:10","10:12","10:15","10:18","10:21","10:24","10:27","10:30","10:37","10:47","10:52",
+        "11:03","11:16","11:22","11:32","11:37","11:52",
+        "12:02","12:12","12:16","12:22","12:28","12:32","12:37","12:47","12:52",
+        "13:22","13:37","13:52",
+        "14:30",
+        "15:55"
+    ],
+    // 立命館大学発 (シャトルバス 3番のりば)
+    toStation: [
+        "10:50",
+        "11:50",
+        "12:25","12:30","12:43","12:50",
+        "13:10","13:30","13:50",
+        "14:10","14:30","14:40","14:50","14:53","14:58",
+        "15:03","10:10","15:20","15:30","15:40","15:50",
+        "16:00","16:10","16:20","16:30","16:37","16:40","16:43","16:47","16:50","16:53","16:57",
+        "17:03","17:15","17:20","17:40","17:50",
+        "18:05","18:20","18:23","18:28","18:33","18:38","18:48","18:58",
+        "19:03","19:18","19:33","19:48",
+        "20:08","20:45"
+    ]
 };
 
 let currentMode = '';
 
-// 初期設定：午前/午後の自動判定と夜間モード判定
 function init() {
     const now = new Date();
     const hour = now.getHours();
-
-    // 1. 18時以降なら夜間モードクラスを付与
-    if (hour >= 18 || hour < 6) {
-        document.body.classList.add('night-mode');
-    }
-
-    // 2. 12時前なら大学行、12時以降なら駅行をデフォルトに
+    if (hour >= 18 || hour < 6) document.body.classList.add('night-mode');
+    
+    // 12時前なら駅発、12時以降なら大学発をデフォルトに
     const defaultMode = (hour < 12) ? 'toUniv' : 'toStation';
-    switchDirection(defaultMode, false);
+    switchDirection(defaultMode);
 }
 
-function switchDirection(mode, isManual) {
+function switchDirection(mode) {
     currentMode = mode;
-    
-    // タブのクラス更新
     document.getElementById('btn-toUniv').classList.toggle('active', mode === 'toUniv');
     document.getElementById('btn-toStation').classList.toggle('active', mode === 'toStation');
-    
-    document.getElementById('direction-text').innerText = (mode === 'toUniv') ? "大学行シャトルバス" : "駅行（帰り）シャトルバス";
+    document.getElementById('direction-text').innerText = (mode === 'toUniv') ? "南草津駅 → 立命館大学" : "立命館大学 → 南草津駅";
     updateBusInfo();
+}
+
+function calcDiffMin(targetStr, now) {
+    const [h, m] = targetStr.split(':');
+    const target = new Date();
+    target.setHours(h, m, 0);
+    return Math.floor((target - now) / 1000 / 60);
 }
 
 function updateBusInfo() {
@@ -141,12 +165,14 @@ function updateBusInfo() {
     let isTomorrow = (upcoming.length === 0);
 
     if (isTomorrow) {
-        upcoming = [schedule[0], schedule[1]];
+        upcoming = [schedule[0], schedule[1], schedule[2]];
     }
 
     const countdownEl = document.getElementById('countdown');
     const label2 = document.getElementById('label2');
     const label3 = document.getElementById('label3');
+    const diff2El = document.getElementById('diff2');
+    const diff3El = document.getElementById('diff3');
 
     if (isTomorrow) {
         countdownEl.innerHTML = `<div class="finished">本日の運行終了</div>`;
@@ -154,6 +180,8 @@ function updateBusInfo() {
         label3.innerHTML = `<span class="tomorrow-tag">明日</span>次発`;
         document.getElementById('time2').innerText = upcoming[0] || "--:--";
         document.getElementById('time3').innerText = upcoming[1] || "--:--";
+        diff2El.innerText = "";
+        diff3El.innerText = "";
     } else {
         const nextTime = upcoming[0];
         const [h, m] = nextTime.split(':');
@@ -164,17 +192,19 @@ function updateBusInfo() {
         const sec = Math.floor(diff / 1000) % 60;
         
         countdownEl.innerHTML = `${min}<span>分</span>${sec}<span>秒</span>`;
+        
         label2.innerText = "次発";
         label3.innerText = "次々発";
         document.getElementById('time2').innerText = upcoming[1] || "終バス";
         document.getElementById('time3').innerText = upcoming[2] || "--:--";
+        
+        diff2El.innerText = upcoming[1] ? `あと ${calcDiffMin(upcoming[1], now)}分` : "";
+        diff3El.innerText = upcoming[2] ? `あと ${calcDiffMin(upcoming[2], now)}分` : "";
     }
 }
 
-// 起動
 init();
 setInterval(updateBusInfo, 1000);
 </script>
-
 </body>
 </html>
