@@ -151,4 +151,123 @@ const parseTimes = (times, stopName) => {
 const busData = {
     station: {
         routes: [
-            { id: 's1', stop: '
+            { id: 's1', stop: '1番のりば', price: '200', dest: '直行シャトルバス', 
+              times: parseTimes(["07:30","07:40","07:45","07:52","07:57","08:01","08:05","08:15","08:16","08:16","08:18","08:20","08:20","08:23","08:23","08:25","08:27","08:30","08:33","08:37","08:40","08:45","08:50","08:55","09:02","09:12","09:20","09:25","09:30","09:33","09:40","09:43","09:47","09:50","09:53","09:58","10:01","10:04","10:07","10:10","10:12","10:15","10:18","10:21","10:24","10:27","10:30","10:37","10:47","10:52","11:03","11:16","11:22","11:32","11:37","11:52","12:02","12:12","12:16","12:22","12:28","12:32","12:37","12:47","12:52","13:22","13:37","13:52","14:30","15:55"], "1番") },
+            { id: 's2', stop: '3, 4, 5番のりば', price: '270', dest: 'かがやき・パナ・立命経由', 
+              times: [
+                  ...parseTimes(["08:07","08:16","08:37","09:02","09:20","09:40","10:04","10:18","10:37","11:16","10:37","12:16","12:37","13:16","13:37","14:16","14:37","15:16","16:18"], "3番"),
+                  ...parseTimes(["06:57","07:27","07:37","07:47","08:01","08:16","08:30","08:33","08:45","09:02","09:30","09:40","10:04","10:24","10:37","11:03","11:22","11:37","12:22","13:03","13:22","14:03","14:22","15:02","15:22","15:37","15:52","16:03","16:22","16:37","16:54","17:09","17:24","17:39","17:54","18:09","18:24","18:39","18:54","19:09","19:24","19:54","20:09","20:24","20:54","21:09","21:24"], "4番"),
+                  ...parseTimes(["08:59","09:20","09:52","10:52","11:52","12:52","13:52","14:52"], "5番")
+              ].sort((a, b) => a.time.localeCompare(b.time)) }
+        ]
+    },
+    univ: {
+        routes: [
+            { id: 'u1', stop: '3番のりば', price: '200', dest: '南草津駅 行 (直行)', 
+              times: parseTimes(["10:50","11:50","12:25","12:30","12:43","12:50","13:10","13:30","13:50","14:10","14:30","14:40","14:50","14:53","14:58","15:03","15:10","15:20","15:30","15:40","15:50","16:00","16:10","16:20","16:30","16:37","16:40","16:43","16:47","16:50","16:53","16:57","17:03","17:15","17:20","17:40","17:50","18:05","18:20","18:23","18:28","18:33","18:38","18:48","18:58","19:03","19:18","19:33","19:48","20:08","20:45"], "3番") },
+            { id: 'u2', stop: '2番のりば', price: '270', dest: '南草津駅 行 (各線経由)', 
+              times: parseTimes(["07:00","07:15","08:05","08:35","09:05","09:25","09:35","09:45","10:05","10:40","10:45","10:50","11:05","11:35","11:50","12:05","12:25","12:30","12:35","12:43","12:50","13:05","13:10","13:30","13:35","13:45","13:50","14:05","14:10","14:30","14:35","14:40","14:50","14:53","14:55","14:58","15:03","15:05","15:10","15:20","15:30","15:35","15:40","15:45","15:50","16:00","16:05","16:10","16:20","16:30","16:37","16:40","16:40","16:43","16:45","16:47","16:50","16:53","16:57","17:03","17:05","17:10","17:15","17:20","17:20","17:25","17:35","17:40","17:40","17:50","17:50","17:55","18:05","18:05","18:10","18:20","18:20","18:23","18:25","18:28","18:33","18:35","18:38","18:40","18:48","18:55","18:58","19:03","19:05","19:10","19:18","19:20","19:25","19:33","19:35","19:40","19:48","19:50","19:50","19:55","20:05","20:10","20:20","20:25","20:40","20:45","20:50","20:55","21:10","21:25","21:40","21:50","22:00","22:40"], "2番") }
+        ]
+    }
+};
+
+let currentBase = '';
+let currentRouteId = '';
+
+function init() {
+    const hour = new Date().getHours();
+    setBase(hour < 12 ? 'station' : 'univ');
+}
+
+function setBase(base) {
+    currentBase = base;
+    document.getElementById('base-station').classList.toggle('active', base === 'station');
+    document.getElementById('base-univ').classList.toggle('active', base === 'univ');
+    const routeTabs = document.getElementById('route-tabs');
+    routeTabs.innerHTML = '';
+    busData[base].routes.forEach(route => {
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn';
+        btn.innerHTML = `${route.stop}<br><small>${route.price}円</small>`;
+        btn.onclick = () => setRoute(route.id);
+        btn.id = `btn-${route.id}`;
+        routeTabs.appendChild(btn);
+    });
+    setRoute(busData[base].routes[0].id);
+}
+
+function setRoute(routeId) {
+    currentRouteId = routeId;
+    const routes = busData[currentBase].routes;
+    const route = routes.find(r => r.id === routeId);
+    routes.forEach(r => {
+        const btn = document.getElementById(`btn-${r.id}`);
+        if(btn) btn.classList.toggle('active', r.id === routeId);
+    });
+    const p = document.getElementById('price-display');
+    p.innerText = `${route.price}円`;
+    p.style.background = route.price === '200' ? 'var(--shuttle-green)' : 'var(--bus-blue)';
+    document.getElementById('stop-display').innerText = route.stop;
+    document.getElementById('dest-display').innerText = route.dest;
+    updateDisplay();
+}
+
+function updateDisplay() {
+    const now = new Date();
+    const nowStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+    const route = busData[currentBase].routes.find(r => r.id === currentRouteId);
+    let upcoming = route.times.filter(t => t.time > nowStr);
+    const isTomorrow = upcoming.length === 0;
+    const countdownEl = document.getElementById('countdown');
+
+    const updateLaterRow = (index, timeId, stopId, diffId) => {
+        const bus = upcoming[index];
+        if (bus) {
+            document.getElementById(timeId).innerText = bus.time;
+            document.getElementById(stopId).innerHTML = `<span class="later-stop">${bus.stop}</span>`;
+            const [th, tm] = bus.time.split(':');
+            const tt = new Date(); tt.setHours(th, tm, 0);
+            let d = Math.floor((tt - now) / 1000 / 60);
+            document.getElementById(diffId).innerText = `あと ${d}分`;
+        } else {
+            document.getElementById(timeId).innerText = index === 1 ? "終バス" : "--:--";
+            document.getElementById(stopId).innerHTML = "";
+            document.getElementById(diffId).innerText = "";
+        }
+    };
+
+    if (isTomorrow) {
+        upcoming = [route.times[0], route.times[1]];
+        document.getElementById('timer-label').innerText = "本日の運行は終了しました";
+        countdownEl.innerHTML = `<div style="font-size:1.4rem; opacity:0.5; padding:10px;">また明日！</div>`;
+        document.getElementById('current-stop-detail').innerHTML = "";
+        document.getElementById('label2').innerHTML = `<span class="tomorrow-tag">明日</span>始発`;
+        document.getElementById('label3').innerHTML = `<span class="tomorrow-tag">明日</span>次発`;
+        updateLaterRow(0, 'time2', 'stop2', 'diff2');
+        updateLaterRow(1, 'time3', 'stop3', 'diff3');
+    } else {
+        const firstBus = upcoming[0];
+        document.getElementById('timer-label').innerText = "出発まであと";
+        const [h, m] = firstBus.time.split(':');
+        const target = new Date(); target.setHours(h, m, 0);
+        const diff = target - now;
+        const min = Math.floor(diff / 1000 / 60);
+        const sec = Math.floor(diff / 1000) % 60;
+        countdownEl.innerHTML = `${min}<span>分</span>${sec}<span>秒</span>`;
+        if(min < 5) countdownEl.classList.add('near-departure');
+        else countdownEl.classList.remove('near-departure');
+        
+        document.getElementById('current-stop-detail').innerHTML = `
+            <div style="font-size:1.1rem; font-weight:800; margin-bottom:8px;">${firstBus.time} 発</div>
+            <span class="stop-number-badge">${firstBus.stop}</span>
+        `;
+        updateLaterRow(1, 'time2', 'stop2', 'diff2');
+        updateLaterRow(2, 'time3', 'stop3', 'diff3');
+    }
+}
+
+init();
+setInterval(updateDisplay, 1000);
+</script>
+</body>
+</html>
