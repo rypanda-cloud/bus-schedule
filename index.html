@@ -41,7 +41,7 @@
             background-attachment: fixed;
             min-height: 100vh;
             margin: 0;
-            padding: env(safe-area-inset-top) 16px 100px; /* 下部にボタン用スペース */
+            padding: env(safe-area-inset-top) 16px 60px;
             color: var(--text-main);
             display: flex;
             justify-content: center;
@@ -62,9 +62,8 @@
         }
         .tab-btn.active { background: var(--card-bg); color: var(--rit-red); box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-1px); }
 
-        /* 遅延アラート表示領域 */
         #delay-alert-container {
-            display: none; /* 条件を満たすまで非表示 */
+            display: none;
             margin-top: 15px;
             background: var(--delay-yellow);
             color: #000;
@@ -99,15 +98,37 @@
         .later-stop { background: rgba(0,0,0,0.05); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; margin-left: 8px; }
         .later-diff { color: var(--accent-orange); font-size: 0.85rem; font-weight: 800; }
 
-        /* 固定報告ボタン */
-        #report-trigger {
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
-            background: var(--rit-red); color: white; border: none; padding: 15px 30px;
-            border-radius: 50px; font-weight: bold; font-size: 1rem; box-shadow: 0 10px 20px rgba(187, 0, 47, 0.4);
-            z-index: 100; cursor: pointer; display: flex; align-items: center; gap: 10px;
+        .footer-info {
+            text-align: center; margin-top: 30px; font-size: 0.7rem; color: var(--text-sub); font-weight: bold;
         }
 
-        /* 報告モーダル/バナー */
+        /* ページ内に配置する報告ボタンのスタイル（出発地選択に合わせる） */
+        .report-section {
+            margin-top: 15px;
+        }
+        #report-trigger-btn {
+            width: 100%;
+            background: rgba(0,0,0,0.05);
+            border: none;
+            padding: 15px;
+            border-radius: 16px;
+            color: var(--rit-red);
+            font-weight: 800;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+        }
+        #report-trigger-btn:active {
+            background: var(--card-bg);
+            transform: scale(0.98);
+        }
+
+        /* 報告モーダル */
         #report-modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); z-index: 200;
@@ -180,12 +201,16 @@
             </div>
         </div>
     </div>
-    <div class="footer">Data Version: 2025.4.7 改正対応</div>
-</div>
 
-<button id="report-trigger" onclick="openReport()">
-    📢 遅延情報を知らせる
-</button>
+    <div class="footer-info">Data Version: 2025.4.7 改正対応</div>
+
+    <!-- ここに報告ボタンを配置 -->
+    <div class="report-section">
+        <button id="report-trigger-btn" onclick="openReport()">
+            📢 遅延情報を知らせる
+        </button>
+    </div>
+</div>
 
 <div id="report-modal">
     <div class="modal-content">
@@ -201,8 +226,7 @@
 
         <div class="option-group">
             <span class="option-label">ルート</span>
-            <div class="btn-grid" id="opt-route-grid">
-                </div>
+            <div class="btn-grid" id="opt-route-grid"></div>
         </div>
 
         <div class="option-group">
@@ -221,7 +245,7 @@
 </div>
 
 <script>
-// --- 時刻表データ（前回と同様） ---
+// --- 時刻表データ（既存通り） ---
 const parseTimes = (times, stopName) => times.map(t => ({ time: t.replace(/[;,,]/g, ':').substring(0,5), stop: stopName }));
 const busData = {
     station: { routes: [
@@ -242,7 +266,6 @@ let currentBase = '';
 let currentRouteId = '';
 let reportData = { base: '', route: '', delay: '' };
 
-// --- アプリ基本ロジック ---
 function init() {
     const hour = new Date().getHours();
     setBase(hour < 12 ? 'station' : 'univ');
@@ -288,7 +311,6 @@ function updateDisplay() {
     let upcoming = route.times.filter(t => t.time > nowStr);
     const countdownEl = document.getElementById('countdown');
 
-    // 遅延アラートの判定ロジック
     checkDelayStatus(route);
 
     if (upcoming.length === 0) {
@@ -324,11 +346,9 @@ function updateDisplay() {
     }
 }
 
-// --- 遅延報告システムのロジック ---
-
+// --- 遅延報告ロジック ---
 function openReport() {
     document.getElementById('report-modal').style.display = 'flex';
-    // 現在の選択状態をデフォルトにする
     selectOpt('base', currentBase);
 }
 
@@ -341,8 +361,6 @@ function selectOpt(type, value) {
         reportData.base = value;
         document.getElementById('opt-base-station').classList.toggle('selected', value === 'station');
         document.getElementById('opt-base-univ').classList.toggle('selected', value === 'univ');
-        
-        // ルートボタンを動的に更新
         const grid = document.getElementById('opt-route-grid');
         grid.innerHTML = '';
         busData[value].routes.forEach(r => {
@@ -381,8 +399,6 @@ function submitReport() {
     if (!reportData.base || !reportData.route || !reportData.delay) {
         alert("すべての項目を選択してください"); return;
     }
-    
-    // ローカルストレージに保存（擬似的なサーバー送信）
     let reports = JSON.parse(localStorage.getItem('bus_reports') || '[]');
     reports.push({
         timestamp: Date.now(),
@@ -391,7 +407,6 @@ function submitReport() {
         delay: reportData.delay
     });
     localStorage.setItem('bus_reports', JSON.stringify(reports));
-    
     alert("報告ありがとうございます！");
     closeReport();
 }
@@ -400,26 +415,19 @@ function checkDelayStatus(currentRoute) {
     const now = Date.now();
     const tenMins = 10 * 60 * 1000;
     const reports = JSON.parse(localStorage.getItem('bus_reports') || '[]');
-    
-    // 直近10分以内の、このルートに関する報告を抽出
     const activeReports = reports.filter(r => 
         r.route === currentRoute.id && 
         Math.abs(now - r.timestamp) < tenMins
     );
-
-    // バスの本数を計算（現在時刻の前後10分）
     const nowMoment = new Date();
     const checkStart = new Date(nowMoment.getTime() - tenMins);
     const checkEnd = new Date(nowMoment.getTime() + tenMins);
     const timeToMin = (d) => d.getHours() * 60 + d.getMinutes();
-    
     const busInWindow = currentRoute.times.filter(t => {
         const [h, m] = t.time.split(':');
         const bMin = parseInt(h) * 60 + parseInt(m);
         return bMin >= timeToMin(checkStart) && bMin <= timeToMin(checkEnd);
     });
-
-    // 報告数がバスの本数を上回ったらアラート表示
     const alertBox = document.getElementById('delay-alert-container');
     if (activeReports.length > 0 && activeReports.length >= busInWindow.length) {
         alertBox.style.display = 'block';
