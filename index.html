@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>立命館バス案内 Premium</title>
+    <title>RITSUMEI MINAKUSA BUS GUIDE</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -49,11 +49,10 @@
         .container { width: 100%; max-width: 480px; }
 
         header { text-align: center; padding: 10px 0; }
-        header h1 { font-size: 1.1rem; margin: 0; letter-spacing: 2px; color: var(--rit-red); font-weight: 900; text-transform: uppercase; }
+        header h1 { font-size: 1.1rem; margin: 0; letter-spacing: 1px; color: var(--rit-red); font-weight: 900; text-transform: uppercase; }
         
         .section-label { font-size: 0.7rem; font-weight: 800; margin: 15px 0 6px 10px; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; }
 
-        /* 時刻表切替タブ */
         .timetable-tabs { display: flex; background: rgba(0,0,0,0.1); border-radius: 12px; padding: 4px; gap: 4px; margin-bottom: 10px; }
         .tt-btn { flex: 1; border: none; padding: 8px 4px; border-radius: 8px; font-size: 0.75rem; font-weight: bold; cursor: pointer; background: transparent; color: var(--text-sub); transition: 0.3s; }
         .tt-btn.active { background: var(--rit-red); color: white; box-shadow: 0 2px 8px rgba(187,0,47,0.3); }
@@ -84,7 +83,7 @@
 <body>
 
 <div class="container">
-    <header><h1>Ritumei Bus Guide</h1></header>
+    <header><h1>RITSUMEI MINAKUSA BUS GUIDE</h1></header>
 
     <div class="section-label">時刻表タイプを選択</div>
     <div class="timetable-tabs">
@@ -128,7 +127,7 @@
         <div id="departed-container" class="departed-list"></div>
     </div>
 
-    <div style="text-align: center; margin-top: 30px; font-size: 0.7rem; color: var(--text-sub); font-weight: bold;">Data Version: 2025.4.7 改正対応</div>
+    <div style="text-align: center; margin-top: 30px; font-size: 0.7rem; color: var(--text-sub); font-weight: bold;">Data Version: 2025.4.7 改正対応 (2026 Cal)</div>
 
     <div class="report-section">
         <button id="report-trigger-btn" onclick="openReport()">📢 遅延情報を知らせる</button>
@@ -160,17 +159,35 @@
 if (!localStorage.getItem('bus_user_id')) localStorage.setItem('bus_user_id', 'user_' + Math.random().toString(36).substr(2, 9));
 const userId = localStorage.getItem('bus_user_id');
 
-const holidays2025 = ["2025-01-01", "2025-01-13", "2025-02-11", "2025-02-23", "2025-02-24", "2025-03-20", "2025-04-29", "2025-05-03", "2025-05-04", "2025-05-05", "2025-05-06", "2025-07-21", "2025-08-11", "2025-09-15", "2025-09-23", "2025-10-13", "2025-11-03", "2025-11-23", "2025-11-24"];
-function isHoliday(date) { const day = date.getDay(); if (day === 0 || day === 6) return true; const ymd = date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, '0') + "-" + String(date.getDate()).padStart(2, '0'); return holidays2025.includes(ymd); }
+// --- 2026年 祝日リスト（土日は自動判定されるため、祝日および振替休日のみ定義） ---
+const holidays2026 = [
+    "2026-01-01", "2026-01-02", "2026-01-12",
+    "2026-02-11", "2026-02-23",
+    "2026-03-20",
+    "2026-04-29",
+    "2026-05-03", "2026-05-04", "2026-05-05", "2026-05-06",
+    "2026-07-20",
+    "2026-08-11",
+    "2026-09-21", "2026-09-22", "2026-09-23",
+    "2026-10-12",
+    "2026-11-03", "2026-11-23"
+];
+
+function isHoliday(date) { 
+    const day = date.getDay(); 
+    if (day === 0 || day === 6) return true; // 土日の判定
+    const ymd = date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, '0') + "-" + String(date.getDate()).padStart(2, '0');
+    return holidays2026.includes(ymd); // 祝日の判定
+}
 
 const parseTimes = (times, stopName) => times.map(t => ({ time: t.replace(/[;,,]/g, ':').trim().padStart(5, '0'), stop: stopName }));
 
 const masterData = {
     a: { // 平日 開講日
         station: [
-            { id: 's1', stop: '1番のりば', price: '200', dest: '直行シャトルバス', times: parseTimes(["7:30","7:40","7:45","7:52","7:57","8:01","8:05","8:15","8:16","8:16","8:18","8:20","8:20","8:23","8:23","8:25","8:27","8:30","8:33","8:37","8:40","8:45","8:50","8:55","9:02","9:12","9:20","9:25","9:30","9:33","9:40","9:43","9:47","9:50","9:53","9:58","10:01","10:04","10:07","10:10","10:12","10:15","10:18","10:21","10:24","10:27","10:30","10:37","10:47","10:52","11:03","11:16","11:22","11:32","11:37","11:52","12:02","12:12","12:16","12:22","12:28","12:32","12:37","12:47","12:52","13:22","13:37","13:52","14:30","15:55"], "1番") },
+            { id: 's1', stop: '1番のりば', price: '200', dest: '直行シャトルバス', times: parseTimes(["7:30","7:40","7:45","7:52","7:57","8:01","8:05","8:15","8:16","8:18","8:20","8:23","8:25","8:27","8:30","8:33","8:37","8:40","8:45","8:50","8:55","9:02","9:12","9:20","9:25","9:30","9:33","9:40","9:43","9:47","9:50","9:53","9:58","10:01","10:04","10:07","10:10","10:12","10:15","10:18","10:21","10:24","10:27","10:30","10:37","10:47","10:52","11:03","11:16","11:22","11:32","11:37","11:52","12:02","12:12","12:16","12:22","12:28","12:32","12:37","12:47","12:52","13:22","13:37","13:52","14:30","15:55"], "1番") },
             { id: 's2', stop: '3, 4, 5番のりば', price: '270', dest: 'かがやき・パナ・立命経由', times: [
-                ...parseTimes(["8:07","8:16","8:37","9:02","9:20","9:40","10:04","10:18","10:37","11:16","10:37","12:16","12:37","13:16","13:37","14:16","14:37","15:16","16:18"], "3番"),
+                ...parseTimes(["8:07","8:16","8:37","9:02","9:20","9:40","10:04","10:18","10:37","11:16","12:16","12:37","13:16","13:37","14:16","14:37","15:16","16:18"], "3番"),
                 ...parseTimes(["6:57","7:27","7:37","7:47","8:01","8:16","8:30","8:33","8:45","9:02","9:30","9:40","10:04","10:24","10:37","11:03","11:22","11:37","12:22","13:03","13:22","14:03","14:22","15:02","15:22","15:37","15:52","16:03","16:22","16:37","16:54","17:09","17:24","17:39","17:54","18:09","18:24","18:39","18:54","19:09","19:24","19:54","20:09","20:24","20:54","21:09","21:24"], "4番"),
                 ...parseTimes(["8:59","9:20","9:52","10:52","11:52","12:52","13:52","14:52"], "5番")
             ].sort((x,y) => x.time.localeCompare(y.time)) }
@@ -189,7 +206,7 @@ const masterData = {
             ].sort((x,y) => x.time.localeCompare(y.time)) }
         ],
         univ: [
-            { id: 'u1', stop: '3番のりば', price: '200', dest: '南草津駅 行', times: parseTimes(["7:45","8:45","9:15","9:25","9:45","9:50","10:15","10:25","10:45","10:50","11:00","11:05","11:25","11:35","12:00","12:05","12:30","12:35","13:00","13:05","13:25","13:35","13:45","14:00","14:05","14:25","14:35","14:55","15:00","15:03","15:10","15:20","15:25","15:30","15:40","15:45","15:50","16:00","16:05","16:25","16:35","16:45","17:00","17:15","17:20","17:30","17:40","17:45","17:50","18:00","18:05","18:15","18:20","18:23","18:28","18:30","18:33","18:38","18:45","18:48","18:58","19:00","19:15","19:18","19:30","19:33","19:45","19:48","20:00","20:08","20:15","20:45","21:00","21:30"], "3番") }
+            { id: 'u2', stop: '2番のりば', price: '270', dest: '南草津駅 行', times: parseTimes(["7:45","8:45","9:15","9:25","9:45","9:50","10:15","10:25","10:45","10:50","11:00","11:05","11:25","11:35","12:00","12:05","12:30","12:35","13:00","13:05","13:25","13:35","13:45","14:00","14:05","14:25","14:35","14:55","15:00","15:03","15:10","15:20","15:25","15:30","15:40","15:45","15:50","16:00","16:05","16:25","16:35","16:45","17:00","17:15","17:20","17:30","17:40","17:45","17:50","18:00","18:05","18:15","18:20","18:23","18:28","18:30","18:33","18:38","18:45","18:48","18:58","19:00","19:15","19:18","19:30","19:33","19:45","19:48","20:00","20:08","20:15","20:45","21:00","21:30"], "2番") }
         ]
     },
     c: { // 平日 閉講日
@@ -201,7 +218,7 @@ const masterData = {
             ].sort((x,y) => x.time.localeCompare(y.time)) }
         ],
         univ: [
-            { id: 'u1', stop: '3番のりば', price: '200', dest: '南草津駅 行', times: parseTimes(["07:00","07:15","08:05","08:35","09:05","09:25","09:35","09:45","10:00","10:05","10:25","10:40","10:45","11:00","11:05","11:25","11:35","12:00","12:05","12:30","12:35","13:00","13:05","13:25","13:35","13:45","14:00","14:05","14:25","14:35","14:55","15:00","15:05","15:25","15:35","15:45","16:00","16:05","16:25","16:40","16:45","17:00","17:05","17:10","17:20","17:25","17:30","17:35","17:40","17:50","17:55","18:00","18:05","18:10","18:20","18:25","18:30","18:35","18:40","18:55","19:00","19:05","19:10","19:20","19:25","19:35","19:40","19:50","19:55","20:00","20:05","20:10","20:20","20:25","20:30","20:40","20:50","20:55","21:00","21:10","21:25","21:40","21:50","22:00","22:40"], "3番") }
+            { id: 'u2', stop: '2番のりば', price: '270', dest: '南草津駅 行', times: parseTimes(["07:00","07:15","08:05","08:35","09:05","09:25","09:35","09:45","10:00","10:05","10:25","10:40","10:45","11:00","11:05","11:25","11:35","12:00","12:05","12:30","12:35","13:00","13:05","13:25","13:35","13:45","14:00","14:05","14:25","14:35","14:55","15:00","15:05","15:25","15:35","15:45","16:00","16:05","16:25","16:40","16:45","17:00","17:05","17:10","17:20","17:25","17:30","17:35","17:40","17:50","17:55","18:00","18:05","18:10","18:20","18:25","18:30","18:35","18:40","18:55","19:00","19:05","19:10","19:20","19:25","19:35","19:40","19:50","19:55","20:00","20:05","20:10","20:20","20:25","20:30","20:40","20:50","20:55","21:00","21:10","21:25","21:40","21:50","22:00","22:40"], "2番") }
         ]
     }
 };
@@ -229,11 +246,9 @@ function setBase(base) {
     currentBase = base;
     document.getElementById('base-station').classList.toggle('active', base === 'station');
     document.getElementById('base-univ').classList.toggle('active', base === 'univ');
-    
     const routeTabs = document.getElementById('route-tabs');
     routeTabs.innerHTML = '';
     const routes = masterData[currentTimetable][base];
-    
     routes.forEach(route => {
         const btn = document.createElement('button');
         btn.className = 'tab-btn';
@@ -249,12 +264,10 @@ function setRoute(routeId) {
     currentRouteId = routeId;
     const routes = masterData[currentTimetable][currentBase];
     const route = routes.find(r => r.id === routeId);
-    
     routes.forEach(r => {
         const el = document.getElementById(`btn-${r.id}`);
         if(el) el.classList.toggle('active', r.id === routeId);
     });
-    
     const p = document.getElementById('price-display');
     p.innerText = `${route.price}円`;
     p.style.background = route.price === '200' ? 'var(--shuttle-green)' : 'var(--bus-blue)';
@@ -270,12 +283,11 @@ function updateDisplay() {
     
     if (!route || route.times.length === 0) {
         document.getElementById('countdown').innerHTML = `<div style="font-size:1.4rem; opacity:0.5; padding:10px;">本日は運休です</div>`;
+        document.getElementById('departed-container').innerHTML = "";
         return;
     }
-
+    
     let upcoming = route.times.filter(t => t.time > nowStr);
-
-    // 出発済み表示
     const departedContainer = document.getElementById('departed-container');
     let departedHtml = "";
     route.times.forEach(t => {
@@ -302,7 +314,6 @@ function updateDisplay() {
         const sec = Math.floor((diff % 60000) / 1000);
         document.getElementById('countdown').innerHTML = `${min}<span>分</span>${sec}<span>秒</span>`;
         document.getElementById('current-stop-detail').innerHTML = `<div style="font-size:1.1rem; font-weight:800; margin-bottom:8px;">${first.time} 発</div><span style="background:var(--rit-red); color:white; padding:6px 18px; border-radius:12px; font-weight:bold;">${first.stop}</span>`;
-        
         const updateRow = (idx, tId, sId, dId) => {
             const b = upcoming[idx];
             if (b) {
@@ -355,7 +366,6 @@ function checkDelayStatus(currentRoute) {
         alertBox.innerText = `⚠️ 遅延報告あり：約${avg}分の遅れ`;
     } else { alertBox.style.display = 'none'; }
 }
-
 init();
 </script>
 </body>
